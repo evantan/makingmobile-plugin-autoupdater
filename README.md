@@ -1,0 +1,1 @@
+# Makingmobile framework autoupdater plugin

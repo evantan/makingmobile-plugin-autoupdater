@@ -1,0 +1,28 @@
+{
+  "name": "makingmobile-plugin-autoupdater",
+  "version": "0.0.1-beta.1",
+  "description": "MakingMobile framework autoupdater plugin",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified! Configure in package.json\" && exit 1"
+  },
+  "dependencies": {
+      "node-minify": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/makingmobile/makingmobile-plugin-autoupdater.git"
+  },
+  "keywords": [
+    "makingmobile",
+    "autoupdater",
+    "updater",
+    "autoupdate",
+    "update"
+  ],
+  "author": "MakingMobile Development Team",
+  "license": "GPLv3",
+  "bugs": {
+    "url": "https://github.com/makingmobile/makingmobile-plugin-autoupdater/issues"
+  }
+}
