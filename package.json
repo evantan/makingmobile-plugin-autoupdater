@@ -1,13 +1,13 @@
 {
   "name": "makingmobile-plugin-autoupdater",
-  "version": "0.0.1-beta.1",
+  "version": "0.0.1-beta.2",
   "description": "MakingMobile framework autoupdater plugin",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified! Configure in package.json\" && exit 1"
   },
   "dependencies": {
-      "node-minify": "*"
+      "node-minify": "=0.7.3", //wait yuicompressor to fix windows full path bug
   },
   "repository": {
     "type": "git",

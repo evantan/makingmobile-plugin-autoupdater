@@ -3,7 +3,7 @@ var path = require('path'),
     fs = require('fs'),
     crypto = require('crypto'),
     compressor = require('node-minify'),
-    fsutil = require('../makingmobile/lib/util/fs'),
+    fsutil = require('../makingmobile/lib/util/fs.js'),
     mkdirr = fsutil.mkdirr,
     rmdirr = fsutil.rmdirr,
     _tmpdir = path.resolve(require('os').tmpdir(), 'makingmobile', 'autoupdate'),
@@ -66,11 +66,11 @@ function _bundle (dfile, sfileArr) {
         i;
     
     console.log('Autoupdater: bundling file ' + dfile);
-    if (!fs.existsSyn(dir)) {
+    if (!fs.existsSync(dir)) {
         mkdirr(dir);
     }
     for (i = 0; i < sfileArr.length; i++){
-        if (!fs.existsSyn(sfileArr[i])) {
+        if (!fs.existsSync(sfileArr[i])) {
             console.trace();
             throw 'Autoupdater: bundle file "' + sfileArr[i] + '" does not exist';
         }
@@ -79,6 +79,10 @@ function _bundle (dfile, sfileArr) {
         outstr += '/* <-------- End of file: ' + sfileArr[i] + ' */\n\n';
     }
     fs.writeFileSync(dfile, outstr, {encoding: 'utf8'});
+}
+
+function denormalizepath(p) {
+    return p.split(path.sep).join('/');
 }
 
 function _fromSource () {
@@ -97,12 +101,12 @@ function _fromSource () {
             skip = false;
             for(j = 0; j < ignore.length; j++){
                 if (ignore[j] instanceof RegExp) {
-                    if (path.resolve(currentdir, farr[i]).match(ignore[j])) {
+                    if (denormalizepath(path.join(currentdir, farr[i])).match(ignore[j])) {
                         skip = true;
                         break;
                     }
                 } else {
-                    if (path.resolve(currentdir, farr[i]) === ignore[j]) {
+                    if (denormalizepath(path.join(currentdir, farr[i])) === ignore[j]) {
                         skip = true;
                         break;
                     }
@@ -110,18 +114,18 @@ function _fromSource () {
             }
             if (skip) continue;
             for(j = 0; j < bfs.length; j++){
-                if (bfs[j] === path.resolve(currSource, currentdir, farr[i])){
+                if (denormalizepath(bfs[j]) === denormalizepath(path.resolve(currSource, currentdir, farr[i]))){
                     skip = true;
                     break;
                 }
             }
             if (skip) continue;
             if(fs.lstatSync(path.resolve(currSource, currentdir, farr[i])).isDirectory()){
-                fs.mkdirSync(path.resolve(currDestination, currentdir));
-                copysource(path.resolve(currentdir, farr[i]));
+                fs.mkdirSync(path.resolve(currDestination, currentdir, farr[i]));
+                copysource(path.join(currentdir, farr[i]));
             } else {
-                content = fs.readFileSync(path.resolve(currSource,farr[i]), {encoding: 'utf8'});
-                fs.writeFileSync(path.resolve(currDestination, currentdir, farr[i]), content, {encoding: 'utf8'});
+                content = fs.readFileSync(path.resolve(currSource, currentdir, farr[i]));
+                fs.writeFileSync(path.resolve(currDestination, currentdir, farr[i]), content);
             }
         }
     }
@@ -138,15 +142,15 @@ function _fromSource () {
     for(i = 0; i < source.length; i++){
         currDestination = path.join(_tmpdir, '' + i);
         fs.mkdirSync(currDestination);
-        currSource = path.resolve(_rootdir, source['from']);
+        currSource = path.resolve(_rootdir, source[i]['from']);
         console.log('Autoupdater: copy from ' + currSource);
-        ignore = source['ignore'];
-        bundle = source['bundle'];
-        rename = source['rename'];
+        ignore = source[i]['ignore'] || [];
+        bundle = source[i]['bundle'] || {};
+        rename = source[i]['rename'] || {};
         bfs = [];
         for(key in bundle){
             if (bundle.hasOwnProperty(key)){
-                if (bundle[ley] instanceof Array) {
+                if (bundle[key] instanceof Array) {
                     for (j = 0; j < bundle[key].length; j++){
                         bfs.push(path.resolve(currSource, bundle[key][j]));
                     }
@@ -164,20 +168,21 @@ function _fromSource () {
         //do bundle
         for (key in bundle){
             if (bundle.hasOwnProperty(key)){
-                if (bundle[ley] instanceof Array) {
+                if (bundle[key] instanceof Array) {
                     bfs = [];
                     for (j = 0; j < bundle[key].length; j++){
                         bfs.push(path.resolve(currSource, bundle[key][j]));
                     }
-                    _bundle(path.resolve(currDestination, bundle[key]), bfs);
+                    _bundle(path.resolve(currDestination, key), bfs);
                 } else {
                     tmp = _parseBundleHtml(fs.readFileSync(path.resolve(currSource, bundle[key]), {encoding: 'utf8'}));
                     for (key2 in tmp) {
+                        if (!tmp.hasOwnProperty(key2)) continue;
                         bfs = [];
                         for (j = 0; j < tmp[key2].length; j++){
                             bfs.push(path.resolve(currSource, bundle[key], '..', tmp[key2][j]));
                         }
-                        _bundle(path.resolve(currDestination, tmp[key2]), bfs);
+                        _bundle(path.resolve(currDestination, key2), bfs);
                     }
                 }
             }
@@ -185,19 +190,20 @@ function _fromSource () {
         //rename
         for (key in rename){
             if (rename.hasOwnProperty(key)){
-                if (!fs.existsSyn(path.resolve(currDestination, key))) {
+                if (!fs.existsSync(path.resolve(currDestination, key))) {
                     console.trace();
                     throw 'Autoupdater: rename source file "' + path.resolve(currDestination, key) + '" does not exist';
                 }
-                if (fs.existsSyn(path.resolve(currDestination, rename[key]))) {
+                if (fs.existsSync(path.resolve(currDestination, rename[key]))) {
                     console.trace();
                     throw 'Autoupdater: rename destination file "' + path.resolve(currDestination, rename[key]) + '" already exist';
                 }
-                if (!fs.existsSyn(path.resolve(currDestination, rename[key], '..'))){
+                if (!fs.existsSync(path.resolve(currDestination, rename[key], '..'))){
                     mkdirr(path.resolve(currDestination, rename[key], '..'));
                 }
-                tmp = fs.readFileSync(path.resolve(currDestination, key), {encoding: 'utf8'});
-                fs.writeFileSync(path.resolve(currDestination, rename[key]), tmp, {encoding: 'utf8'});
+                tmp = fs.readFileSync(path.resolve(currDestination, key));
+                fs.writeFileSync(path.resolve(currDestination, rename[key]), tmp);
+                fs.unlinkSync(path.resolve(currDestination, key));
             }
         }
     }
@@ -209,14 +215,14 @@ function _safeCopy (from, to) {
     
     for (i = 0; i < farr.length; i++) {
         if (fs.lstatSync(path.join(from, farr[i])).isDirectory()){
-            if (!fs.existsSyn(path.join(to, farr[i]))) {
+            if (!fs.existsSync(path.join(to, farr[i]))) {
                 fs.mkdirSync(path.join(to, farr[i]));
             }
-            _saveCopy(path.join(from, farr[i]), path.join(to, farr[i]));
+            _safeCopy(path.join(from, farr[i]), path.join(to, farr[i]));
         } else {
-            if (!fs.existsSyn(path.join(to, farr[i]))) {
-                content = fs.readFileSync(path.join(from, farr[i]), {encoding: 'utf8'});
-                fs.writeFileSync(path.join(to, farr[i]), content, {encoding: 'utf8'});
+            if (!fs.existsSync(path.join(to, farr[i]))) {
+                content = fs.readFileSync(path.join(from, farr[i]));
+                fs.writeFileSync(path.join(to, farr[i]), content);
             }
         }
     }
@@ -264,12 +270,12 @@ function _findMinify (dir, ignore, minifyJs, minifyCss) {
         skip = false,
         arr, i, j;
     
-    if (!!minifyJs && !!minifyCss) return [];
+    if (!minifyJs && !minifyCss) return [];
     
     for (i = 0; i < farr.length; i++) {
         skip = false;
         for (j = 0; j < ignore.length; j++){
-            if (path.join(dir, farr[i]) === ignore[j]){
+            if (denormalizepath(path.join(dir, farr[i])) === denormalizepath(ignore[j])){
                 skip = true;
                 break;
             }
@@ -339,6 +345,11 @@ function _toDestination (next) {
         i, j, k;
     
     for (i = 0; i < destination.length; i++) {
+        if (fs.existsSync(path.resolve(_rootdir, destination[i]['path'])) && destination[i]['cleanBeforeBuild']) {
+            rmdirr(path.resolve(_rootdir, destination[i]['path']));
+        }
+        destination[i]["skip-source"] = destination[i]["skip-source"] || [];
+        destination[i]["minify-ignore"] = destination[i]["minify-ignore"] || [];
         copy_sources = [];
         for (j = 0; j < _config['source'].length; j++){
             skip = false;
@@ -354,11 +365,11 @@ function _toDestination (next) {
             });
         }
         for (j = 0; j < copy_sources.length; j++){
-            to = path.resolve(_rootdir, destination['path'], copy_sources[j]['to']);
-            if(!fs.existsSyn(to)){
+            to = path.resolve(_rootdir, destination[i]['path'], copy_sources[j]['to']);
+            if(!fs.existsSync(to)){
                 mkdirr(to);
             }
-            _safeCopy(path.resolve(_tmpdir, copy_sources[j]['idx']), to);
+            _safeCopy(path.resolve(_tmpdir, '' + copy_sources[j]['idx']), to);
         }
         destination[i]['minify-ignore'] = destination[i]['minify-ignore'] || [];
         for (j = 0; j < destination[i]['minify-ignore'].length; j++){
@@ -369,7 +380,7 @@ function _toDestination (next) {
     console.log('Autoupdater: minifying files ... ');
     _minify(minify_arr, function(err){
         if (err){
-            next('error when minify files');
+            next('error when minify files -- ' + err);
         } else {
             _buildRepository(next);
         }
@@ -379,7 +390,7 @@ function _toDestination (next) {
 function update (plugin_config, rootdir, next) {
     plugin_config['source'] = plugin_config['source'] || [];
     plugin_config['destination'] = plugin_config['destination'] || [];
-    if (!fs.existsSyn(_tmpdir)) {
+    if (!fs.existsSync(_tmpdir)) {
         mkdirr(_tmpdir);
     }
     _config = plugin_config;
