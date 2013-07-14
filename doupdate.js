@@ -65,7 +65,6 @@ function _bundle (dfile, sfileArr) {
         outstr = '',
         i;
     
-    console.log('Autoupdater: bundling file ' + dfile);
     if (!fs.existsSync(dir)) {
         mkdirr(dir);
     }
@@ -173,6 +172,7 @@ function _fromSource () {
                     for (j = 0; j < bundle[key].length; j++){
                         bfs.push(path.resolve(currSource, bundle[key][j]));
                     }
+                    console.log('Autoupdater: bundling file ' + key);
                     _bundle(path.resolve(currDestination, key), bfs);
                 } else {
                     tmp = _parseBundleHtml(fs.readFileSync(path.resolve(currSource, bundle[key]), {encoding: 'utf8'}));
@@ -182,6 +182,7 @@ function _fromSource () {
                         for (j = 0; j < tmp[key2].length; j++){
                             bfs.push(path.resolve(currSource, bundle[key], '..', tmp[key2][j]));
                         }
+                        console.log('Autoupdater: bundling file ' + key2);
                         _bundle(path.resolve(currDestination, key2), bfs);
                     }
                 }
