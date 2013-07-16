@@ -331,7 +331,8 @@ function _buildRepository (next) {
     }
     if (repository_dir) {
         res = _makemd5(repository_dir);
-        res = {'lastupdate': now, 'root': res};
+        res[repository_file] = {md5: now};
+        res = {'lastupdate': now, 'root': {"items": res}};
         fs.writeFileSync(path.join(repository_dir, repository_file), JSON.stringify(res), {encoding: 'utf8'});
         next();
     } else {

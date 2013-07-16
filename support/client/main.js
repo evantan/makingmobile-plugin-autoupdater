@@ -14,12 +14,12 @@ function MMP_autoupdater(mm, plugin_config){
 /*
  * Do client auto update
  *      msgCallback:    function(msg) publish message during update process
- *      successCallback:    function() update success
+ *      successCallback:    function(appfolderurl) update success
  *      failCallback:   function(reason) update failed 
- *      appfolder: string root folder for app. Should be a single level folder name without '/'
  *      appendNames: [string,] tags for specific patch
+ *      appfolder: string root folder for app. Should be a single level folder name without '/'
  */
-MMP_autoupdater.prototype.update = function (msgCallback, successCallback, failCallback, appfolder, appendNames){
+MMP_autoupdater.prototype.update = function (msgCallback, successCallback, failCallback, appendNames, appfolder){
     var i;
     
     if (!this.mm.hasPhoneGap) {
@@ -79,7 +79,7 @@ MMP_autoupdater.prototype._onGotAppRootDir = function (directoryEntry) {
 
 MMP_autoupdater.prototype._onAppRootDirNotFound = function (error) {
     if (error.code == FileError.NOT_FOUND_ERR){
-        this.fsRoot.getDirectory(this.fsRoot.fullPath + '/' + ROOT_DIR + '/' + this.appfolder, {create: true, exclusive: false}, this._onGotAppRootDir.bind(this), this._fileIOFailWithoutDeleteRoot.bind(this));
+        this.fsRoot.getDirectory(ROOT_DIR + '/' + this.appfolder, {create: true, exclusive: false}, this._onGotAppRootDir.bind(this), this._fileIOFailWithoutDeleteRoot.bind(this));
     }else {
         console.log('Autoupdater: FileIO fail! code:' + error.code);
         this.failCallback('文件读写出现错误！');
@@ -134,12 +134,16 @@ MMP_autoupdater.prototype._onGotMetaFile = function (file) {
         try {
             data = JSON.parse(evt.target.result);
         } catch (error) {
+            data = null;
+        }
+        if (!data || !data.root) {
             console.log('Autoupdater: Empty local metaData! Maybe the first init?');
             me._onLocalMetaEmpty();
-        }
-        me.lMeta = data;
-        me.lMeta.root.items[me.metaFilename] = {md5: ''};
-        me._compare();
+        } else {
+            me.lMeta = data;
+            me.lMeta.root.items[me.metaFilename] = {md5: ''};
+            me._compare();
+        } 
     };
     reader.onerror = function(evt){
         console.log('Autoupdater: FileIO fail when read meta file!');
@@ -181,7 +185,7 @@ MMP_autoupdater.prototype._walkTree = function (pathArr) {
     }
     
     for (key in lc.items) {
-        //looup file to be deleted
+        //lookup items to be deleted
         if (rc.items[key] === undefined && (!me._isSpName(key) || me._cleanName(key))) {
             finished = false;
             akey = me._isSpName(key) ? me._cleanName(key) : key;
@@ -313,7 +317,7 @@ MMP_autoupdater.prototype._compare = function () {
         if (!me.rMeta.root.status){
             if (me.lMeta.lastupdate === me.rMeta.lastupdate){
                 //bypass update
-                me.successCallback();
+                me.successCallback(me.appRoot.fullPath);
             } else {
                 me.rMeta.root.status = 'ing';
                 me._compare();
@@ -333,7 +337,7 @@ MMP_autoupdater.prototype._compare = function () {
             
         } else if (me.rMeta.root.status == 'done') {          
             me.msgCallback('更新完毕！共更新' + me.counter + '个文件。');
-            me.successCallback();
+            me.successCallback(me.appRoot.fullPath);
         }
     }, 0);
 };
@@ -423,6 +427,7 @@ MMP_autoupdater.prototype._clearAppRootDir = function () {
  *      appfolder: string root folder for app. Should be a single level folder name without '/'
  */
 MMP_autoupdater.prototype.appfolderExist = function (successCallback, failCallback, appfolder) { 
+    appfolder = appfolder || this.mm.config.name;
     window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fileSystem) {
         fileSystem.root.getDirectory(ROOT_DIR, {create: true, exclusive: false}, function(directoryEntry) {
             directoryEntry.getDirectory(appfolder, null, function() {

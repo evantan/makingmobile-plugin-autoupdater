@@ -24,7 +24,7 @@ function MMP_autoupdater(mm, plugin_config){
             break;
         }
     }
-    if (repository_file && fs.existsSyn(repository_file)) {
+    if (repository_file && fs.existsSync(repository_file)) {
         try {
             this.lastupdate = new Date(JSON.parse(fs.readFileSync(repository_file,  {encoding: 'utf-8'})).lastupdate);
         } catch (err) {
@@ -38,8 +38,7 @@ function MMP_autoupdater(mm, plugin_config){
     mm.register(this, PROP_NAME);
     
     if (repdir) {
-        mm.app.use(this.mm.util.slash_url(this.mm.config.urlprefix) + this.mm.util.slash_url(this.config.urlspace), 
-                mm.express.static(path.resolve(mm._rootdir, repdir)));
+        mm.app.use(this.mm.util.slash_url(this.mm.config.urlprefix) + this.mm.util.slash_url(this.config.urlspace), mm.express.static(path.resolve(mm._rootdir, repdir), {hidden: true}));
     } else {
         console.warn("Autoupdater: repository not set, skip client-side auto update");
     }

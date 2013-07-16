@@ -1,7 +1,7 @@
 /*jslint sub:true */
 var fs = require('fs'),
     path = require('path'),
-    doupdate = require('./index');
+    doupdate = require('./doupdate');
 
 function find_plugin_config(config) {
     for (var i = 0; i < config.plugins.length; i++) {
