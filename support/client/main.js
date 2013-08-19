@@ -229,7 +229,7 @@ MMP_autoupdater.prototype._walkTree = function (pathArr) {
             akey = me._isSpName(key) ? me._cleanName(key) : key;
             if (!akey){
                 rc.items[key]['status'] = 'done';
-                return ;
+                continue;
             }
             ln = -1;
             for (k = 0; k < me.magicName.length; k++) {
