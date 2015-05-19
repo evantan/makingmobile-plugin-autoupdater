@@ -2,7 +2,7 @@
 var PROP_NAME = 'autoupdater',
     path = require('path'),
     fs = require('fs'),
-    doupdate = require('./index');
+    doUpdate = require('./index');
 
 /*
  * nodeSide autoupdater-plugin class
@@ -54,7 +54,7 @@ function MMP_autoupdater(mm, plugin_config){
  *      if success, err is null
  */
 MMP_autoupdater.prototype.update = function(cb) {
-    doupdate(this.config, this.mm._rootdir, cb);
+    doUpdate(this.config, this.mm._rootdir, cb);
 };
 
 module.exports = MMP_autoupdater;

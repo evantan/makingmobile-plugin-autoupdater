@@ -1,7 +1,7 @@
 /*jslint sub:true */
 var fs = require('fs'),
     path = require('path'),
-    doupdate = require('./doupdate');
+    doUpdate = require('./doupdate');
 
 function find_plugin_config(config) {
     for (var i = 0; i < config.plugins.length; i++) {
@@ -15,7 +15,7 @@ function find_plugin_config(config) {
 function post_build (config, rootdir, next) {
     var pconfig = find_plugin_config(config);
     
-    doupdate(pconfig, rootdir, next);
+    doUpdate(pconfig, rootdir, next);
 }
 
 function init (mm) {

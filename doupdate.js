@@ -296,14 +296,14 @@ function _findMinify (dir, ignore, minifyJs, minifyCss) {
     return res;
 }
 
-function _makemd5 (dir) {
+function _makeMd5 (dir) {
     var res = {},
         farr = fs.readdirSync(dir),
         hash, md5, content, i;
     
     for (i = 0; i < farr.length; i++) {
         if (fs.lstatSync(path.join(dir, farr[i])).isDirectory()) {
-            res[farr[i]] = {items: _makemd5(path.join(dir, farr[i]))};
+            res[farr[i]] = {items: _makeMd5(path.join(dir, farr[i]))};
         } else {
             hash = crypto.createHash('md5');
             content = fs.readFileSync(path.join(dir, farr[i]));
@@ -330,7 +330,7 @@ function _buildRepository (next) {
         }
     }
     if (repository_dir) {
-        res = _makemd5(repository_dir);
+        res = _makeMd5(repository_dir);
         res[repository_file] = {md5: now};
         res = {'lastupdate': now, 'root': {"items": res}};
         fs.writeFileSync(path.join(repository_dir, repository_file), JSON.stringify(res), {encoding: 'utf8'});
