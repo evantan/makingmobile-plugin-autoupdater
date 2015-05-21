@@ -1,6 +1,7 @@
 /*jslint sub:true */
 var PROP_NAME = 'autoupdater',
-    ROOT_DIR = 'MakingMobile';
+    ROOT_DIR = 'MakingMobile',
+    INIT_APP_SPACE_SIZE = 10 * 1024 * 1024;
 
 /*
  * clientSide autoupdater-plugin class
@@ -22,8 +23,8 @@ function MMP_autoupdater(mm, plugin_config){
 MMP_autoupdater.prototype.update = function (msgCallback, successCallback, failCallback, appendNames, appfolder){
     var i;
     
-    if (!this.mm.hasPhoneGap) {
-        return failCallback('Phonegap no found');
+    if (!this.mm.hasCordova) {
+        return failCallback('Cordova no found');
     }
     
     this.url = (this.mm.localstore.get('url') || this.mm.config.url.replace(/\/$/, '')) + 
@@ -56,7 +57,7 @@ MMP_autoupdater.prototype.update = function (msgCallback, successCallback, failC
         return failCallback('Server repository no found'); 
     }
     
-    window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, this._onFileSystemSuccess.bind(this), this._rootNotFound.bind(this));
+    window.requestFileSystem(window.PERSISTENT, INIT_APP_SPACE_SIZE, this._onFileSystemSuccess.bind(this), this._rootNotFound.bind(this));
 };
 
 MMP_autoupdater.prototype._onFileSystemSuccess = function (fileSystem) {
@@ -176,7 +177,7 @@ MMP_autoupdater.prototype._walkTree = function (pathArr) {
         finished = true,
         lc = me.lMeta.root,
         rc = me.rMeta.root,
-        key = null, k = null, akey = null, path = '',
+        key = null, k = null, akey = null, path = '', fpath = '',
         ln, i;
     
     for (i = 0; i < pathArr.length; i++) {
@@ -286,8 +287,8 @@ MMP_autoupdater.prototype._walkTree = function (pathArr) {
                             ( (lc.items[key] === undefined) || (lc.items[key]['md5'] != rc.items[key]['md5']) )
                         ){
                         finished = false;
-                        path = '',
-                            fpath = '';
+                        path = '';
+                        fpath = '';
                         for(i = 0; i < pathArr.length; i++) {
                             path += ( me._isSpName(pathArr[i]) ? me._cleanName(pathArr[i]) : pathArr[i] ) + '/';
                             fpath += pathArr[i] + '/';
@@ -317,7 +318,7 @@ MMP_autoupdater.prototype._compare = function () {
         if (!me.rMeta.root.status){
             if (me.lMeta.lastupdate === me.rMeta.lastupdate){
                 //bypass update
-                me.successCallback(me.appRoot.fullPath);
+                me.successCallback(me.appRoot.toURL());
             } else {
                 me.rMeta.root.status = 'ing';
                 me._compare();
@@ -337,7 +338,7 @@ MMP_autoupdater.prototype._compare = function () {
             
         } else if (me.rMeta.root.status == 'done') {          
             me.msgCallback('更新完毕！共更新' + me.counter + '个文件。');
-            me.successCallback(me.appRoot.fullPath);
+            me.successCallback(me.appRoot.toURL());
         }
     }, 0);
 };
@@ -380,7 +381,7 @@ MMP_autoupdater.prototype._downfile = function (filepath, remotepath) {
     this.counter += 1;
     this.msgCallback('正在下载文件' + filepath);
     ft.download(this.url + '/' + remotepath, 
-        this.fsRoot.fullPath + '/' + ROOT_DIR + '/' + this.appfolder + '/' + filepath,
+        this.fsRoot.toURL() + '/' + ROOT_DIR + '/' + this.appfolder + '/' + filepath,
         this._compare.bind(this), 
         this._fileDownFail.bind(this));
 };
@@ -428,7 +429,7 @@ MMP_autoupdater.prototype._clearAppRootDir = function () {
  */
 MMP_autoupdater.prototype.appfolderExist = function (successCallback, failCallback, appfolder) { 
     appfolder = appfolder || this.mm.config.name;
-    window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fileSystem) {
+    window.requestFileSystem(window.PERSISTENT, INIT_APP_SPACE_SIZE, function(fileSystem) {
         fileSystem.root.getDirectory(ROOT_DIR, {create: true, exclusive: false}, function(directoryEntry) {
             directoryEntry.getDirectory(appfolder, null, function() {
                 successCallback();

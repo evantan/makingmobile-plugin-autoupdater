@@ -1,6 +1,6 @@
 {
   "name": "makingmobile-plugin-autoupdater",
-  "version": "2.0.1-beta.5",
+  "version": "2.0.1-beta.7",
   "description": "MakingMobile framework autoupdater plugin",
   "main": "index.js",
   "scripts": {
